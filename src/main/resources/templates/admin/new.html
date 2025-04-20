@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Create new user</title>
+</head>
+<body>
+<form th:method="POST" th:action="@{/admin/new}" th:object="${user}">
+    <label for="name">Name: </label>
+    <input type="text" th:field="*{name}" id="name" required/>
+    <div th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color: red;"></div>
+    <br/>
+
+    <label for="email">Email: </label>
+    <input type="email" th:field="*{email}" id="email" required/>
+    <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color: red;"></div>
+    <br/>
+
+    <label for="username">Username: </label>
+    <input type="text" th:field="*{username}" id="username" required/>
+    <div th:if="${#fields.hasErrors('username')}" th:errors="*{username}" style="color: red;"></div>
+    <br/>
+
+    <label for="password">Password: </label>
+    <input type="password" th:field="*{password}" id="password" required/>
+    <div th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color: red;"></div>
+    <br/>
+
+    <label for="enabled">Enabled: </label>
+    <select th:field="*{enabled}" id="enabled">
+        <option th:value="true">Active</option>
+        <option th:value="false">Disabled</option>
+    </select>
+    <br/>
+
+    <label>Roles:</label>
+    <div>
+        <input type="checkbox" id="role_admin" name="roles" value="ADMIN"/>
+        <!--        th:checked="${#lists.contains(user.roles, 'ADMIN')}"-->
+        <label for="role_admin">ADMIN</label>
+    </div>
+    <div>
+        <input type="checkbox" id="role_user" name="roles" value="USER"/>
+        <!--        th:checked="${#lists.contains(user.roles, 'USER') or user.roles == null}"-->
+        <label for="role_user">USER</label>
+    </div>
+    <br/>
+
+    <input type="submit" value="Create new user"/>
+
+    <div th:if="${message}" th:text="${message}" style="color: green; margin-top: 10px;"></div>
+</form>
+<br/>
+<div th:fragment="logout" sec:authorize="isAuthenticated()">
+    <form th:action="@{/logout}" method="post">
+        <button type="submit" class="btn btn-link">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </form>
+</div>
+</body>
+</html>
