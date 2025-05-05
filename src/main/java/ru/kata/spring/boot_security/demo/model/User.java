@@ -20,7 +20,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -62,10 +61,6 @@ public class User implements UserDetails {
         this.roles = roles;
         this.enabled = enabled;
     }
-
-    public User(String name, String email) {
-    }
-
     public Integer getId() {
         return id;
     }
@@ -152,12 +147,15 @@ public class User implements UserDetails {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
+
         User user = (User) o;
-        return Objects.equals(email, user.email) && Objects.equals(username, user.username);
+        return id.equals(user.id) && username.equals(user.username);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(email, username);
+        int result = id.hashCode();
+        result = 31 * result + username.hashCode();
+        return result;
     }
 }

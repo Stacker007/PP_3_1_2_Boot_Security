@@ -1,4 +1,4 @@
-package ru.kata.spring.boot_security.demo.configs;
+package ru.kata.spring.boot_security.demo.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +18,8 @@ public class SecurityBeansConfig {
 
     @Bean
     public UserDetailsService userDetailsService(UserRepository userRepository) {
-        return username -> {
-            User user = userRepository.findByUsername(username);
+        return email -> {
+            User user = userRepository.findByEmail((email));
             if (user == null) {
                 throw new UsernameNotFoundException("User not found");
             }
