@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Users</title>
+</head>
+<body>
+<div th:each="user : ${people}">
+    <a th:href="@{/admin/edit?id={id}(id=${user.getId})}" th:text="${user.getName}">user</a>
+</div>
+<br/>
+<div>
+    <a href="admin/new">ADD NEW USER</a>
+</div>
+<div th:fragment="logout" sec:authorize="isAuthenticated()">
+    <form th:action="@{/logout}" method="post">
+        <button type="submit" class="btn btn-link">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </form>
+</div>
+
+</body>
+</html>

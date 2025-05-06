@@ -134,7 +134,7 @@ public class UserController {
             return "redirect:/admin";
         } catch (UserNotFoundException e) {
             model.addAttribute("error", e.getMessage());
-            return "admin/index";
+            return "index";
         }
     }
 }
