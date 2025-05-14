@@ -9,7 +9,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.transaction.Transactional;
 import java.util.Objects;
 
 @Entity
@@ -29,7 +28,6 @@ public class Role implements GrantedAuthority {
 
     }
 
-    @Transactional
     @Override
     public String getAuthority() {
         return role;
@@ -50,7 +48,6 @@ public class Role implements GrantedAuthority {
     public void setRole(String role) {
         this.role = role;
     }
-
 
     @Override
     public final boolean equals(Object o) {
