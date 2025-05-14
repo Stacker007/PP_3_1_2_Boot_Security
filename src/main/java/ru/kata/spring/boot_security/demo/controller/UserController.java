@@ -1,6 +1,8 @@
 package ru.kata.spring.boot_security.demo.controller;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +20,7 @@ import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
 import javax.validation.Valid;
+import java.security.Principal;
 
 @Controller
 public class UserController {
@@ -36,20 +39,42 @@ public class UserController {
         this.roleService = roleService;
         this.userService = userService;
     }
+    @GetMapping("/")
+    public String adminPanel(Model model, Principal principal) {
+        // Получаем текущего пользователя
+        User currentUser = userRepository.findByUsername(principal.getName());
+        model.addAttribute("currentUser", currentUser);
 
+        // Получаем всех пользователей для админской таблицы
+        model.addAttribute("people", userRepository.findAll());
+
+        // Пустой объект для формы создания
+        model.addAttribute("user", new User());
+
+        return "index";
+    }
 
     @GetMapping("/admin")
-    public String users(Model model) {
+    public String users(Model model, Principal principal) {
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByUsername(principal.getName());
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("auth", auth);
         model.addAttribute("people", userRepository.findAll());
+        model.addAttribute("activeTab", "users");
+        model.addAttribute("user", new User());
         return "admin/index";
     }
 
 
     @GetMapping("/admin/new")
     public String newUser(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        model.addAttribute("auth", auth);
         model.addAttribute("user", new User());
-        return "admin/new";
+        model.addAttribute("activeTab", "new");
+        return "admin/index";
     }
 
     @GetMapping("/user")
@@ -123,7 +148,8 @@ public class UserController {
             return "redirect:/admin";
         } catch (UserNotFoundException e) {
             model.addAttribute("error", e.getMessage());
-            return "admin/edit";
+//            return "admin/edit";
+            return "redirect:/admin";
         }
     }
 

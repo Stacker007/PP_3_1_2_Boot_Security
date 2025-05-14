@@ -32,4 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 !/.idea/
-!/src/main/resources/templates/admin/index.html
+!/src/main/resources/templates/index.html

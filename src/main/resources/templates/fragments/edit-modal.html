@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="edit-modal">
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-lg-custom">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:method="POST" th:action="@{/admin/edit}" th:object="${user}">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="editUserId">
+                        <div class="form-group">
+                            <label for="editName">Name:</label>
+                            <input type="text" class="form-control" name="name" id="editName" required/>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmail">Email:</label>
+                            <input type="email" class="form-control" name="email" id="editEmail" required/>
+                        </div>
+                        <div class="form-group">
+                            <label for="editUsername">Username:</label>
+                            <input type="text" class="form-control" name="username" id="editUsername" required/>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPassword">Password:</label>
+                            <input type="password" class="form-control" name="password" id="editPassword"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEnabled">Status:</label>
+                            <select class="form-control" name="enabled" id="editEnabled">
+                                <option value="true">Active</option>
+                                <option value="false">Disabled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Roles:</label>
+                            <div th:each="role : ${allRoles}" class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       th:id="${'editRole_' + role.role}"
+                                       name="roles"
+                                       th:value="${role.role}"/>
+                                <label class="form-check-label" th:for="${'editRole_' + role.role}"
+                                       th:text="${role.role}"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</html>
