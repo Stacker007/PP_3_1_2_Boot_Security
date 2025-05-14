@@ -17,9 +17,9 @@ public class DBDefaultInit implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RoleService roleService;
+    private final RoleServiceImpl roleService;
 
-    public DBDefaultInit(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleService roleService) {
+    public DBDefaultInit(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleServiceImpl roleService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleService = roleService;

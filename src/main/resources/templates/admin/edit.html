@@ -40,8 +40,8 @@
         <input type="checkbox"
                th:id="${'role_' + role.role}"
                name="roles"
-               th:value="${role.role}"
-               th:checked="${#lists.contains(user.roles, role)}"/>
+               th:value="${role.role}"/>
+<!--               th:checked="${#lists.contains(user.roles, role)}"/>-->
         <label th:for="${'role_' + role.role}" th:text="${role.role}"></label>
     </div>
     <br/>

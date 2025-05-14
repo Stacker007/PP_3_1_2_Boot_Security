@@ -1,5 +1,6 @@
 package ru.kata.spring.boot_security.demo.repository;
 
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import ru.kata.spring.boot_security.demo.model.User;
 
@@ -10,5 +11,7 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
     User findByUsername(String username);
 
+
+    @Query("SELECT u FROM User u join fetch u.roles where u.email = :email ")
     User findByEmail(@NotBlank(message = "Email cannot be empty") @Email(message = "Email should be valid") String email);
 }
