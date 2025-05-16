@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<div th:fragment="header">
+    <div class="header-bar">
+        <div class="user-info">
+            <span class="fw-bold" th:text="${auth.principal.email}"></span>
+            <span>with roles:</span>
+            <span th:each="role : ${auth.authorities}">
+                <span th:text="${#strings.substringAfter(role,'ROLE_')} + ' '"></span>
+            </span>
+        </div>
+
+        <div sec:authorize="isAuthenticated()">
+            <a th:href="@{/logout}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+</div>
+</html>
