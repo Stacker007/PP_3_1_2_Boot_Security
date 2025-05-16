@@ -16,7 +16,8 @@ public class UserController {
         if (user == null) {
             return "redirect:/login";
         }
+        model.addAttribute("currentUser", user);
         model.addAttribute("user", user);
-        return "user/user";
+        return "/index";
     }
 }

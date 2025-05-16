@@ -28,6 +28,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public User findById(int id) {
         return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
     }
@@ -74,6 +75,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public List<User> findAll() {
         return (List<User>) userRepository.findAll();
     }

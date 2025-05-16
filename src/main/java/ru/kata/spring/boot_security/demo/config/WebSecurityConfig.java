@@ -18,7 +18,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests(auth -> auth.antMatchers("/index", "/css/**", "/js/**"
-        ).permitAll().antMatchers("/admin/**").hasRole("ADMIN").antMatchers("/", "/user/**").hasAnyRole("USER", "ADMIN").anyRequest().authenticated()).formLogin(form -> form.loginPage("/login").successHandler(successUserHandler).permitAll()).logout().permitAll();
+        ).permitAll().antMatchers("/admin/**").hasRole("ADMIN").antMatchers("/", "/user/**")
+                .hasAnyRole("USER", "ADMIN").anyRequest().authenticated())
+                .formLogin(form -> form.loginPage("/login")
+                        .successHandler(successUserHandler).permitAll())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+                );
     }
 
 }

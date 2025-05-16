@@ -1,5 +1,6 @@
 package ru.kata.spring.boot_security.demo.controller;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -25,24 +26,30 @@ public class AdminController {
         this.roleService = roleService;
     }
 
+    @ModelAttribute("currentUser")
+    public void addCurrentUserToModel(Model model,@AuthenticationPrincipal User currentUser) {
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("user", new User());
+        model.addAttribute("people", userService.findAll());
+    }
     @GetMapping
     public String index(Model model) {
         model.addAttribute("users", userService.findAll());
-        return "admin/index";
+        return "index";
     }
 
 
     @GetMapping("/new")
     public String newUser(Model model) {
         model.addAttribute("user", new User());
-        return "admin/new";
+        return "index";
     }
 
     @PostMapping("/new")
     public String createUser(@Valid @ModelAttribute("user") User user, BindingResult bindingResult, @RequestParam(value = "roles", required = false) String[] roles, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("allRoles", roleService.findAll());
-            return "admin/new";
+            return "index";
         }
 
         try {
@@ -51,7 +58,7 @@ public class AdminController {
         } catch (Exception e) {
             model.addAttribute("message", e.getMessage());
             model.addAttribute("allRoles", roleService.findAll());
-            return "admin/new";
+            return "index";
         }
     }
 
@@ -66,7 +73,7 @@ public class AdminController {
     public String updateUser(@Valid @ModelAttribute("user") User user, BindingResult bindingResult, @RequestParam(value = "roles", required = false) String[] roles, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("allRoles", roleService.findAll());
-            return "admin/edit";
+            return "/index";
         }
 
         try {
@@ -85,7 +92,7 @@ public class AdminController {
             return "redirect:/admin";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
-            return "admin/index";
+            return "index";
         }
     }
 }
