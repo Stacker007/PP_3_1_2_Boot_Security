@@ -1,0 +1,34 @@
+<div th:fragment="user-tab" class="tab-pane fade" id="user-content" role="tabpanel">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>User information-page</h2>
+    </div>
+    <div class="table-container mt-3">
+        <h4 class="mb-3">About user</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Roles</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${currentUser}">
+                    <td th:text="${currentUser.id}"></td>
+                    <td th:text="${currentUser.name}"></td>
+                    <td th:text="${currentUser.username}"></td>
+                    <td th:text="${currentUser.email}"></td>
+                    <td>
+                        <span th:each="role : ${currentUser.roles}"
+                              class="badge bg-primary role-badge"
+                              th:text="${role.role}"></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
