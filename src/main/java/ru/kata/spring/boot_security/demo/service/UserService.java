@@ -12,10 +12,12 @@ public interface UserService {
     User findById(int id);
 
     void updateUser(User user, String[] roles);
+    User updateUser(User user);
 
     void deleteUser(int id);
 
     void createUser(User user, String[] roles);
+    User createUser(User user);
 
     List<User> findAll();
 }
