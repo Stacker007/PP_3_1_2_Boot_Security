@@ -5,6 +5,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const createUserForm = document.getElementById('createUserForm');
     const editModal = new bootstrap.Modal(document.getElementById('editModal'));
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const editForm = document.getElementById('editForm');
+    const deleteForm = document.getElementById('deleteForm');
+    let currentEditUserId = null;
+
+    const userTab = document.getElementById('user-content');
+    if (userTab) {
+        const tabTrigger = document.querySelector('[data-bs-target="#user-content"]');
+        tabTrigger.addEventListener('shown.bs.tab', loadUserData);
+    }
+
 
     // Загрузка данных при старте
     loadUsers();
@@ -14,7 +24,52 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         createUser();
     });
+    editForm.addEventListener('submit', function (e){
+        e.preventDefault();
+        editUser();
+    });
+    deleteForm.addEventListener('submit', handleDeleteUser);
 
+    function loadUserData() {
+        fetch('/api/v1/users/current', {
+            credentials: 'include'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(user => {
+                console.log('Received user data:', user); // Для отладки
+                renderUserData(user);
+            })
+            .catch(error => {
+                console.error('Error loading user data:', error);
+                document.getElementById('userTableBody').innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-danger">
+                    Error loading user data: ${error.message}
+                </td>
+            </tr>
+        `;
+            });
+    }
+    function renderUserData(user) {
+        const rolesHtml = user.roles.map(role =>
+            `<span class="badge bg-primary role-badge">${role.role}</span>`
+        ).join(' ');
+
+        document.getElementById('userTableBody').innerHTML = `
+            <tr>
+                <td>${user.id}</td>
+                <td>${user.name || '-'}</td>
+                <td>${user.username}</td>
+                <td>${user.email}</td>
+                <td>${rolesHtml}</td>
+            </tr>
+        `;
+    }
     // Функция загрузки пользователей
     function loadUsers() {
         fetch('/api/v1/users')
@@ -97,7 +152,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 showAlert('Ошибка создания пользователя: ' + error.message, 'danger');
             });
     }
+    function editUser(e) {
 
+        const formData = new FormData(editForm);
+        const roles = Array.from(editForm.querySelectorAll('input[name="roles"]:checked'))
+            .map(checkbox => checkbox.value);
+
+        const user = {
+            id: parseInt(document.getElementById('editUserId').value),
+            name: formData.get('name'),
+            email: formData.get('email'),
+            username: formData.get('username'),
+            password: formData.get('password'),
+            roles: roles
+        };
+
+        fetch(`/api/v1/users/${user.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(user)
+        })
+            .then(handleResponse)
+            .then(() => {
+                editModal.hide();
+                showAlert('Пользователь успешно обновлен', 'success');
+                loadUsers();
+            })
+            .catch(error => {
+                showAlert('Ошибка обновления пользователя: ' + error.message, 'danger');
+            });
+    }
+
+    function handleDeleteUser(e) {
+        e.preventDefault();
+        const userId = document.getElementById('deleteUserId').value;
+
+        fetch(`/api/v1/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json' // Явно указываем, что ожидаем JSON
+            },
+        })
+            .then(response => {
+                if (!response.ok) {
+                    // Если ответ не OK, пытаемся получить текст ошибки
+                    return response.text().then(text => {
+                        throw new Error(text || 'Ошибка сервера');
+                    });
+                }
+                // Если ответ успешный и пустой, просто продолжаем
+                return Promise.resolve();
+            })
+            .then(() => {
+                deleteModal.hide();
+                showAlert('Пользователь успешно удален', 'success');
+                loadUsers();
+            })
+            .catch(error => {
+                showAlert('Ошибка удаления пользователя: ' + error.message, 'danger');
+                console.error('Error:', error);
+            });
+    }
     // Функция добавления обработчиков для кнопок в таблице
     function addTableEventListeners() {
         // Обработчики кнопок редактирования
@@ -120,7 +237,47 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    function loadUserForEdit(userId) {
+        fetch(`/api/v1/users/${userId}`)
+            .then(handleResponse)
+            .then(user => {
+                currentEditUserId = user.id;
+                fillEditForm(user);
+                editModal.show();
+            })
+            .catch(error => {
+                showAlert('Ошибка загрузки данных пользователя: ' + error.message, 'danger');
+            });
+    }
+    //Заполнение формы редактирования
+    function fillEditForm(user) {
+        document.getElementById('editUserId').value = user.id;
+        document.getElementById('editName').value = user.name || '';
+        document.getElementById('editEmail').value = user.email || '';
+        document.getElementById('editUsername').value = user.username || '';
+        document.getElementById('editPassword').value = '';
 
+        // Сбрасываем чекбоксы ролей
+        document.querySelectorAll('#editForm input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+
+        // Устанавливаем выбранные роли
+        user.roles.forEach(role => {
+            const checkbox = document.querySelector(`#editForm input[value="${role.role}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        });
+    }
+
+    // Обработчик ответа от сервера
+    function handleResponse(response) {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.message || 'Ошибка сервера'); });
+        }
+        return response.json();
+    }
     // Функция открытия модального окна редактирования
     function openEditModal(user) {
         // Заполняем форму редактирования
@@ -148,8 +305,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Функция открытия модального окна удаления
     function openDeleteModal(userId) {
-        document.getElementById('deleteUserId').value = userId;
-        deleteModal.show();
+        // Сначала получаем данные пользователя
+        fetch(`/api/v1/users/${userId}`)
+            .then(response => response.json())
+            .then(user => {
+                // Заполняем поля в модальном окне
+                document.getElementById('deleteUserId').value = user.id;
+                document.getElementById('modalUserId').textContent = user.id;
+                document.getElementById('modalUserName').textContent = user.name || 'N/A';
+                document.getElementById('modalUserEmail').textContent = user.email || 'N/A';
+
+                // Форматируем роли для отображения
+                const rolesText = user.roles.map(role => role.role).join(', ') || 'N/A';
+                document.getElementById('modalUserRoles').textContent = rolesText;
+
+                // Показываем модальное окно
+                deleteModal.show();
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки данных пользователя:', error);
+                showAlert('Не удалось загрузить данные пользователя', 'danger');
+            });
     }
 
     // Функция показа уведомлений

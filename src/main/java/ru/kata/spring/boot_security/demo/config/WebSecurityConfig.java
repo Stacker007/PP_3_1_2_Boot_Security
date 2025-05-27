@@ -19,11 +19,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .csrf().disable()
-                .authorizeRequests(auth -> auth.antMatchers("/index", "/css/**", "/js/**"
-        ).permitAll().antMatchers("/api/v1/users/**").hasRole("ADMIN").antMatchers("/", "/user/**")
-                .hasAnyRole("USER", "ADMIN").anyRequest().authenticated())
-                .formLogin(form -> form.loginPage("/login")
-                        .successHandler(successUserHandler).permitAll())
+                .authorizeRequests(auth -> auth
+                        .antMatchers("/index", "/css/**", "/js/**").permitAll()
+                        .antMatchers("/api/v1/users/current").hasAnyRole("USER", "ADMIN") // Специальное правило для /current
+                        .antMatchers("/api/v1/users/**").hasRole("ADMIN") // Все остальные endpoints под /api/v1/users/
+                        .antMatchers("/", "/user/**").hasAnyRole("USER", "ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .successHandler(successUserHandler)
+                        .permitAll()
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")

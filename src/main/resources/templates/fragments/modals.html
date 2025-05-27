@@ -7,8 +7,10 @@
                     <h5 class="modal-title" id="editModalLabel">Edit User</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form th:method="POST" th:action="@{/admin/edit}" id="edit">
+                <form id="editForm">
                     <div class="modal-body">
+<!--                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>-->
+
                         <input type="hidden" name="id" id="editUserId">
                         <div class="form-group">
                             <label for="editName">Name:</label>

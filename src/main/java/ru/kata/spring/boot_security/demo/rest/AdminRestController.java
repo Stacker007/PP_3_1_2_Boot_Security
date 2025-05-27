@@ -2,12 +2,20 @@ package ru.kata.spring.boot_security.demo.rest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.kata.spring.boot_security.demo.DTO.UserDTO;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.repository.RoleRepository;
-import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
 import java.util.HashSet;
@@ -30,7 +38,6 @@ public class AdminRestController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-
     public ResponseEntity<List<User>> findAllUsers() {
         return ResponseEntity.ok(userService.findAll());
     }
@@ -40,6 +47,11 @@ public class AdminRestController {
         return ResponseEntity.ok(userService.findById(id));
     }
 
+    @GetMapping("/current")
+    public ResponseEntity<User> getCurrentUser(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(userService.findById(user.getId()));
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
 
@@ -47,6 +59,7 @@ public class AdminRestController {
         User createdUser = userService.createUser(user);
         return ResponseEntity.ok(createdUser);
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserDTO userDTO) {
         try {
@@ -84,17 +97,19 @@ public class AdminRestController {
     }
 
     private UserDTO convertToDTO(User user) {
-        List<String> roleNames = user.getRoles().stream()
-                .map(Role::getRole)
-                .collect(Collectors.toList());
+        List<String> roleNames = user.getRoles().stream().map(Role::getRole).collect(Collectors.toList());
 
-        return new UserDTO(
-                user.getId(),
-                user.getUsername(),
-                null, // Пароль не возвращаем
-                user.getEmail(),
-                user.getName(),
-                roleNames
-        );
+        return new UserDTO(user.getId(), user.getUsername(), null, // Пароль не возвращаем
+                user.getEmail(), user.getName(), roleNames);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
+        try {
+            userService.deleteUser(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Ошибка удаления пользователя");
+        }
     }
 }
