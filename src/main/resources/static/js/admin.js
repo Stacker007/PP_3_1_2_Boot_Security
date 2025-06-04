@@ -9,17 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteForm = document.getElementById('deleteForm');
     let currentEditUserId = null;
 
-    const userTab = document.getElementById('user-content');
-    if (userTab) {
-        const tabTrigger = document.querySelector('[data-bs-target="#user-content"]');
-        tabTrigger.addEventListener('shown.bs.tab', loadUserData);
-    }
-
-
-    // Загрузка данных при старте
     loadUsers();
 
-    // Обработчик формы создания пользователя
     createUserForm.addEventListener('submit', function(e) {
         e.preventDefault();
         createUser();
@@ -30,49 +21,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     deleteForm.addEventListener('submit', handleDeleteUser);
 
-    function loadUserData() {
-        fetch('/api/v1/users/current', {
+
+    function loadUsers() {
+        fetch('/api/v1/users',{
             credentials: 'include'
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(user => {
-                console.log('Received user data:', user); // Для отладки
-                renderUserData(user);
-            })
-            .catch(error => {
-                console.error('Error loading user data:', error);
-                document.getElementById('userTableBody').innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center text-danger">
-                    Error loading user data: ${error.message}
-                </td>
-            </tr>
-        `;
-            });
-    }
-    function renderUserData(user) {
-        const rolesHtml = user.roles.map(role =>
-            `<span class="badge bg-primary role-badge">${role.role}</span>`
-        ).join(' ');
-
-        document.getElementById('userTableBody').innerHTML = `
-            <tr>
-                <td>${user.id}</td>
-                <td>${user.name || '-'}</td>
-                <td>${user.username}</td>
-                <td>${user.email}</td>
-                <td>${rolesHtml}</td>
-            </tr>
-        `;
-    }
-    // Функция загрузки пользователей
-    function loadUsers() {
-        fetch('/api/v1/users')
             .then(response => response.json())
             .then(users => {
                 renderUsersTable(users);
@@ -82,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Функция рендеринга таблицы
     function renderUsersTable(users) {
+        console.log(users)
         tableBody.innerHTML = '';
 
         users.forEach(user => {
@@ -95,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${user.email}</td>
                 <td>
                     ${user.roles.map(role =>
-                `<span class="badge bg-primary role-badge">${role.role}</span>`
+                `<span class="badge bg-primary role-badge">${role}</span>`
             ).join(' ')}
                 </td>
                 <td class="action-buttons">
@@ -112,7 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
             tableBody.appendChild(row);
         });
 
-        // Добавляем обработчики для кнопок
         addTableEventListeners();
     }
 
@@ -120,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function createUser() {
         const formData = new FormData(createUserForm);
         const roles = Array.from(createUserForm.querySelectorAll('input[name="roles"]:checked'))
-            .map(checkbox => ({ role: checkbox.value }));
+            .map(checkbox => checkbox.value);
 
         const user = {
             name: formData.get('name'),
@@ -129,8 +81,10 @@ document.addEventListener('DOMContentLoaded', function() {
             password: formData.get('password'),
             roles: roles
         };
+        console.log("Отправляемые данные:", JSON.stringify(user, null, 2));
 
         fetch('/api/v1/users', {
+            credentials: 'include',
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -215,7 +169,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
             });
     }
-    // Функция добавления обработчиков для кнопок в таблице
     function addTableEventListeners() {
         // Обработчики кнопок редактирования
         document.querySelectorAll('.edit-btn').forEach(btn => {

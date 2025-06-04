@@ -1,5 +1,7 @@
 package ru.kata.spring.boot_security.demo.DTO;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.util.List;
 
 public class UserDTO {
@@ -8,6 +10,8 @@ public class UserDTO {
     private String password;
     private String email;
     private String name;
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+
     private List<String> roles;
 
     public UserDTO() {}

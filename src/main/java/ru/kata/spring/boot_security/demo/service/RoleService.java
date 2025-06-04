@@ -13,4 +13,9 @@ public interface RoleService {
     Set<Role> convertStringsToRoles(String[] rolesStrings);
 
     List<Role> findAll();
+
+    Role findRole(String roleName);
+
+    void saveRole(Role role);
+
 }

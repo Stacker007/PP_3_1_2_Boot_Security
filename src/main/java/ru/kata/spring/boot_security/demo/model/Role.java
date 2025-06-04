@@ -67,4 +67,10 @@ public class Role implements GrantedAuthority {
         return this instanceof HibernateProxy
                 ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode()
                 : getClass().hashCode();
-    }}
+    }
+
+    @Override
+    public String toString() {
+        return role;
+    }
+}

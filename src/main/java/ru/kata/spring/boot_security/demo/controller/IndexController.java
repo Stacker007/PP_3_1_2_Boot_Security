@@ -4,7 +4,9 @@ package ru.kata.spring.boot_security.demo.controller;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 @Controller
 public class IndexController {
@@ -18,7 +20,7 @@ public class IndexController {
                 return "redirect:/user";
             }
         }
-        // Если пользователь не аутентифицирован или не имеет нужных ролей, можно перенаправить на страницу входа
         return "redirect:/login";
     }
+
 }

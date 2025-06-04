@@ -1,7 +1,11 @@
 package ru.kata.spring.boot_security.demo.service;
 
+import org.modelmapper.ModelMapper;
+import org.modelmapper.config.Configuration;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import ru.kata.spring.boot_security.demo.DTO.UserDTO;
 import ru.kata.spring.boot_security.demo.exception.UserNotFoundException;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
@@ -9,9 +13,9 @@ import ru.kata.spring.boot_security.demo.repository.RoleRepository;
 import ru.kata.spring.boot_security.demo.repository.UserRepository;
 
 import javax.transaction.Transactional;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -19,12 +23,86 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final RoleService roleService;
     private final RoleRepository roleRepository;
+    private final ModelMapper modelMapper;
 
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RoleService roleService, RoleRepository roleRepository) {
+    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, RoleService roleService, RoleRepository roleRepository, ModelMapper modelMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleService = roleService;
         this.roleRepository = roleRepository;
+        this.modelMapper = modelMapper;
+    }
+
+
+    private void configureModelMapper() {
+        modelMapper.getConfiguration()
+                .setMatchingStrategy(MatchingStrategies.STRICT)
+                .setFieldMatchingEnabled(true)
+                .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE);
+
+        modelMapper.typeMap(User.class, UserDTO.class)
+                .addMappings(mapper -> {
+                    mapper.map(src -> src.getRoles().stream()
+                                    .map(Role::getRole)
+                                    .collect(Collectors.toList()),
+                            UserDTO::setRoles);
+                });
+
+    }
+
+    private User convertToEntity(UserDTO userDTO) {
+        User user = modelMapper.map(userDTO, User.class);
+        Set<Role> roles = userDTO.getRoles().stream()
+                .map(roleService::createRoleIfNotFound)
+                .collect(Collectors.toSet());
+        user.setRoles(roles);
+        return user;
+    }
+    private UserDTO convertToDto(User user) {
+        return modelMapper.map(user, UserDTO.class);
+    }
+
+    @Override
+    @Transactional
+    public List<UserDTO> findAll() {
+        return userRepository.findAll().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+    }
+
+    @Override
+    @Transactional
+    public UserDTO findById(int id) {
+        return userRepository.findById(id).
+                map(this::convertToDto)
+                .orElseThrow(()->new UserNotFoundException("User not found"));
+    }
+
+    @Override
+    public UserDTO createUser(UserDTO userDTO) {
+        User user = convertToEntity(userDTO);
+        user = userRepository.save(user);
+        return convertToDto(user);
+    }
+
+    @Override
+    @Transactional
+    public UserDTO updateUser(Integer id, UserDTO userDTO) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        modelMapper.map(userDTO, existingUser);
+        Set<Role> roles = userDTO.getRoles().stream()
+                .map(roleService::createRoleIfNotFound)
+                .collect(Collectors.toSet());
+        existingUser.setRoles(roles);
+
+        return convertToDto(userRepository.save(existingUser));
+    }
+    @Override
+    public void deleteUser(int id) {
+        userRepository.deleteById(id);
     }
 
     @Override
@@ -33,95 +111,5 @@ public class UserServiceImpl implements UserService {
         return userFromDB != null;
     }
 
-    @Override
-    @Transactional
-    public User findById(int id) {
-        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
-    }
 
-    @Override
-    @Transactional
-    public void updateUser(User user, String[] roles) {
-        if (!userRepository.existsById(user.getId())) {
-            throw new UserNotFoundException("User with id " + user.getId() + " not found");
-        }
-
-        User existingUser = findById(user.getId());
-        existingUser.setName(user.getName());
-        existingUser.setEmail(user.getEmail());
-        existingUser.setUsername(user.getUsername());
-        existingUser.setEnabled(user.isEnabled());
-
-        if (!user.getPassword().isEmpty()) {
-            existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
-        }
-        existingUser.setRoles(roleService.convertStringsToRoles(roles));
-        userRepository.save(existingUser);
-    }
-
-    @Override
-    public User updateUser(User user) {
-        if (!userRepository.existsById(user.getId())) {
-            throw new UserNotFoundException("User with id " + user.getId() + " not found");
-        }
-
-        User existingUser = findById(user.getId());
-        existingUser.setName(user.getName());
-        existingUser.setEmail(user.getEmail());
-        existingUser.setUsername(user.getUsername());
-        existingUser.setEnabled(user.isEnabled());
-
-        if (!user.getPassword().isEmpty()) {
-            existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
-        }
-        return userRepository.save(existingUser);
-    }
-
-    @Override
-    @Transactional
-    public void deleteUser(int id) {
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException("User with id " + id + " not found");
-        }
-        userRepository.deleteById(id);
-    }
-
-    @Override
-    @Transactional
-    public void createUser(User user, String[] roles) {
-        if (isUserExist(user)) {
-            throw new IllegalArgumentException("User already exists");
-        }
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRoles(roleService.convertStringsToRoles(roles));
-        userRepository.save(user);
-    }
-
-    @Override
-    @Transactional
-    public User createUser(User user) {
-        if (isUserExist(user)) {
-            throw new IllegalArgumentException("User already exists");
-        }
-        Set<Role> managedRoles = new HashSet<>();
-        for (Role role : user.getRoles()) {
-            Role existingRole = roleRepository.findByRole(role.getRole());
-            if (existingRole != null) {
-                managedRoles.add(existingRole);
-            } else {
-                managedRoles.add(roleRepository.save(role));
-            }
-        }
-        user.setRoles(managedRoles);
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
-    }
-
-    @Override
-    @Transactional
-    public List<User> findAll() {
-        return (List<User>) userRepository.findAll();
-    }
 }

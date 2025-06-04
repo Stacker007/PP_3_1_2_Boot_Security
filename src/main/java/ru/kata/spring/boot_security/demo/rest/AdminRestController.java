@@ -11,105 +11,62 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import ru.kata.spring.boot_security.demo.DTO.UserDTO;
-import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.repository.RoleRepository;
+import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/users")
-@CrossOrigin(origins = "http://localhost:8080") // Разрешить запросы с фронта
+@CrossOrigin(origins = "http://localhost:8080", allowCredentials = "true",  // Разрешить передачу кук
+        allowedHeaders = {"Authorization", "Content-Type", "X-Requested-With", "Accept", "X-CSRF-TOKEN"}, methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class AdminRestController {
 
     private final UserService userService;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
 
-    public AdminRestController(UserService userService, RoleRepository roleRepository) {
+    public AdminRestController(UserService userService, RoleService roleService) {
         this.userService = userService;
-        this.roleRepository = roleRepository;
+        this.roleService = roleService;
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<User>> findAllUsers() {
+    public ResponseEntity<List<UserDTO>> findAllUsers() {
         return ResponseEntity.ok(userService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable int id) {
+    public ResponseEntity<UserDTO> getUser(@PathVariable int id) {
         return ResponseEntity.ok(userService.findById(id));
     }
 
     @GetMapping("/current")
-    public ResponseEntity<User> getCurrentUser(@AuthenticationPrincipal User user) {
+    public ResponseEntity<UserDTO> getCurrentUser(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userService.findById(user.getId()));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
 
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
-        return ResponseEntity.ok(createdUser);
+        ResponseEntity<UserDTO> ok = ResponseEntity.ok(userService.createUser(userDTO));
+
+        return ok;
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserDTO userDTO) {
-        try {
-            User existingUser = userService.findById(id);
-            User updatedUser = convertToEntity(userDTO);
-            updatedUser.setId(existingUser.getId());
-
-            User savedUser = userService.updateUser(updatedUser);
-            return ResponseEntity.ok(convertToDTO(savedUser));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    // Методы преобразования
-    private User convertToEntity(UserDTO userDTO) {
-        User user = new User();
-        user.setUsername(userDTO.getUsername());
-        user.setPassword(userDTO.getPassword());
-        user.setEmail(userDTO.getEmail());
-        user.setName(userDTO.getName());
-
-        Set<Role> roles = new HashSet<>();
-        for (String roleName : userDTO.getRoles()) {
-            Role role = roleRepository.findByRole(roleName);
-            if (role == null) {
-                role = new Role(roleName);
-                roleRepository.save(role);
-            }
-            roles.add(role);
-        }
-        user.setRoles(roles);
-
-        return user;
-    }
-
-    private UserDTO convertToDTO(User user) {
-        List<String> roleNames = user.getRoles().stream().map(Role::getRole).collect(Collectors.toList());
-
-        return new UserDTO(user.getId(), user.getUsername(), null, // Пароль не возвращаем
-                user.getEmail(), user.getName(), roleNames);
+    public ResponseEntity<UserDTO> updateUser(@PathVariable Integer id, @RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(userService.updateUser(id, userDTO));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
-        try {
-            userService.deleteUser(id);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Ошибка удаления пользователя");
-        }
+        userService.deleteUser(id);
+        return ResponseEntity.ok().build();
     }
 }

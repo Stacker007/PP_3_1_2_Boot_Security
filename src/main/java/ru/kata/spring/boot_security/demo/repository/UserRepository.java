@@ -1,12 +1,12 @@
 package ru.kata.spring.boot_security.demo.repository;
 
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import ru.kata.spring.boot_security.demo.model.User;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends CrudRepository<User, Integer> {
@@ -24,5 +24,5 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
     @Override
     @EntityGraph(attributePaths = {"roles"})
-    Iterable<User> findAll();
+    List<User> findAll();
 }
